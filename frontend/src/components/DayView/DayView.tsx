@@ -227,6 +227,40 @@ const DayView: React.FC<DayViewProps> = ({
   console.log('Hour height:', hourHeight);
   console.log('Selected date:', selectedDate);
 
+  // Function to detect conflicts between suggestions and existing events
+  const detectConflicts = (suggestions: CalendarSuggestion[]): CalendarSuggestion[] => {
+    return suggestions.map(suggestion => {
+      const conflictingEvents: string[] = [];
+      
+      // Create full datetime strings for comparison
+      const suggestedStart = new Date(suggestion.event_start_time_local.includes('T') 
+        ? suggestion.event_start_time_local 
+        : `${suggestion.date}T${suggestion.event_start_time_local}`);
+      const suggestedEnd = new Date(suggestion.event_end_time_local.includes('T') 
+        ? suggestion.event_end_time_local 
+        : `${suggestion.date}T${suggestion.event_end_time_local}`);
+      
+      // Check against each existing event
+      events.forEach(event => {
+        const eventStart = parseISO(event.start_time);
+        const eventEnd = parseISO(event.end_time);
+        
+        // Check for time overlap: events overlap if start1 < end2 && start2 < end1
+        const hasOverlap = suggestedStart < eventEnd && eventStart < suggestedEnd;
+        
+        if (hasOverlap) {
+          conflictingEvents.push(event.title);
+        }
+      });
+      
+      return {
+        ...suggestion,
+        hasConflict: conflictingEvents.length > 0,
+        conflictingEvents
+      };
+    });
+  };
+
   const handleScheduleDogCare = async () => {
     if (!profiles) {
       alert('Profile data not loaded. Please refresh the page.');
@@ -252,8 +286,11 @@ const DayView: React.FC<DayViewProps> = ({
       const response = await apiService.getCalendarSuggestions(agentRequest);
       
       if (response.success) {
-        setSuggestions(response.suggestions);
+        // Check for conflicts with existing events
+        const suggestionsWithConflicts = detectConflicts(response.suggestions);
+        setSuggestions(suggestionsWithConflicts);
         console.log('Received suggestions:', response.suggestions);
+        console.log('Suggestions with conflict detection:', suggestionsWithConflicts);
       } else {
         throw new Error(response.error || 'Failed to get suggestions');
       }

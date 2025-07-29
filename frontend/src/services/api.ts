@@ -116,6 +116,9 @@ export interface CalendarSuggestion {
   priority: string;
   activity_type: string;
   pet_names: string[];
+  // Conflict detection fields (added by frontend)
+  hasConflict?: boolean;
+  conflictingEvents?: string[];
 }
 
 export interface AgentCalendarResponse {
@@ -262,7 +265,8 @@ class ApiService {
       owner_details: agentOwner,
       target_date: targetDate,
       user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      model: 'llama3.2',
+      // model: 'llama3.2',
+      model: 'mistral',
       temperature: 0.7
     };
   }

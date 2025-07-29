@@ -191,7 +191,11 @@ const CalendarSuggestionsModal: React.FC<CalendarSuggestionsModalProps> = ({
                  return (
                    <div
                      key={index}
-                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                     className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                       suggestion.hasConflict 
+                         ? 'border-red-300 bg-red-50' 
+                         : 'border-gray-200'
+                     }`}
                    >
                      <div className="w-full">
                        {/* Title and Activity Type */}
@@ -209,6 +213,11 @@ const CalendarSuggestionsModal: React.FC<CalendarSuggestionsModalProps> = ({
                          >
                            {suggestion.priority} priority
                          </span>
+                         {suggestion.hasConflict && (
+                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-300">
+                             ⚠️ Conflict
+                           </span>
+                         )}
                        </div>
 
                                                 {/* Time and Date */}
@@ -223,12 +232,34 @@ const CalendarSuggestionsModal: React.FC<CalendarSuggestionsModalProps> = ({
                                {format(startTimeLocal, 'h:mm a')} - {format(endTimeLocal, 'h:mm a')}
                              </span>
                            </div>
-                           <div className="flex items-center space-x-1 text-xs text-gray-500">
-                             <span>🌍 Your timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
-                           </div>
-                         </div>
+                                                     <div className="flex items-center space-x-1 text-xs text-gray-500">
+                            <span>🌍 Your timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
+                          </div>
+                        </div>
 
-                       {/* Description */}
+                      {/* Conflict Warning */}
+                      {suggestion.hasConflict && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-red-500">⚠️</span>
+                            <span className="text-red-700 font-medium text-sm">
+                              Schedule Conflict Detected
+                            </span>
+                          </div>
+                          <div className="mt-2 text-red-600 text-sm">
+                            This suggestion overlaps with:
+                            <ul className="mt-1 ml-4">
+                              {suggestion.conflictingEvents?.map((eventTitle, idx) => (
+                                <li key={idx} className="list-disc">
+                                  {eventTitle}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Description */}
                        <p className="text-gray-700 mb-3">{suggestion.event_description}</p>
 
                        {/* Pet Names and Activity Type */}

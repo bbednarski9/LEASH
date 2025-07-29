@@ -30,7 +30,8 @@ This project integrates multiple services to provide AI-powered pet care calenda
 ### 1. Start Ollama
 ```bash
 # Install a model
-ollama pull llama3.2
+# ollama pull llama3.2
+ollama pull mistral
 
 # Start Ollama service
 ollama serve

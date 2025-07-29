@@ -289,7 +289,7 @@ INSTRUCTIONS:
 4. Generate realistic, practical suggestions that fit the owner's lifestyle
 5. Include a variety of activities: walks, feeding times, play sessions, medication reminders, grooming, etc.
 6. Consider the time of day, weather appropriateness, and pet energy levels
-7. Avoid conflicts with existing calendar events
+7. CRITICAL: Avoid conflicts with existing calendar events
 8. Prioritize essential activities (medication, feeding) over optional ones (extra play time)
 
 IMPORTANT TIMEZONE INFORMATION:
@@ -314,7 +314,7 @@ IMPORTANT:
 - ALWAYS include the full date in time fields (e.g., "2025-07-29T06:30:00", NOT just "06:30:00")
 - Include 3-5 realistic suggestions
 - CRITICAL: Compare your suggested times against the existing calendar events shown above to avoid any time overlaps
-- Check that your start/end times don't conflict with any existing event start/end times
+- Check that your start/end times don't conflict with any existing event start/end times. If they do, adjust your suggested times to avoid conflicts.
 - Consider realistic timing for the user's timezone (don't schedule walks at 3 AM local time)
 - Use 24-hour format for times (e.g., "14:00:00" for 2 PM)
 
@@ -332,6 +332,23 @@ EXAMPLE OUTPUT:
   }}
 ]"""
 
+        # Save the system prompt to a file for debugging
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            prompt_file_path = os.path.join(current_dir, "latest_system_prompt.txt")
+            with open(prompt_file_path, 'w', encoding='utf-8') as f:
+                f.write("="*80 + "\n")
+                f.write("LATEST SYSTEM PROMPT GENERATED\n")
+                f.write(f"Generated at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*80 + "\n\n")
+                f.write(system_prompt)
+                f.write("\n\n" + "="*80 + "\n")
+                f.write("END OF PROMPT\n")
+                f.write("="*80 + "\n")
+            logger.info(f"System prompt saved to: {prompt_file_path}")
+        except Exception as e:
+            logger.warning(f"Failed to save system prompt to file: {e}")
+        
         return system_prompt
     
     async def generate_calendar_suggestions(self, request: CalendarFillRequest) -> CalendarFillResponse:
