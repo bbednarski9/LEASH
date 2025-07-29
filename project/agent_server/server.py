@@ -2,7 +2,7 @@ import os
 
 import uvicorn
 # from app.database import Base, engine
-from app.routes import router
+from app.router.routes import router
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +24,7 @@ app.include_router(router)
 
 @app.on_event("startup")
 async def startup():
-    print("Starting up the server on port: ", os.environ.get("PORT", 5001))
+    print("Starting up the server on port: ", os.environ.get("PORT", 5002))
     # async with engine.begin() as conn:
     #     await conn.run_sync(Base.metadata.create_all)
 
@@ -46,4 +46,4 @@ async def serve_swagger_ui():
     return FileResponse(html_path)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5001)))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5002)))

@@ -1,0 +1,698 @@
+openapi: 3.0.3
+info:
+  title: Agent Server - Ollama LLM API
+  description: |
+    AI agent server using Ollama for generating responses from local quantized LLM models.
+    
+    ## Features
+    - Send queries to local Ollama models
+    - List available models
+    - Health check endpoints
+    - Automatic model pulling if not available
+    
+    ## Requirements
+    - Ollama installed and running locally (default: http://localhost:11434)
+    - At least one LLM model pulled (recommended: llama3.2)
+  version: 1.0.0
+  contact:
+    name: Agent Server API
+servers:
+  - url: http://localhost:5002
+    description: Local development server
+    
+paths:
+  /query:
+    post:
+      summary: Send query to LLM
+      description: Send a text query to the specified Ollama model and receive a generated response
+      tags:
+        - LLM Query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            examples:
+              simple_query:
+                summary: Simple question
+                value:
+                  query: "What is the capital of France?"
+                  model: "llama3.2"
+              with_system_prompt:
+                summary: Query with system prompt
+                value:
+                  query: "How should I train my dog?"
+                  model: "llama3.2"
+                  system_prompt: "You are a professional dog trainer with 20 years of experience."
+                  temperature: 0.7
+                  max_tokens: 500
+      responses:
+        '200':
+          description: Successful query response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+              examples:
+                success_response:
+                  summary: Successful response
+                  value:
+                    success: true
+                    response: "The capital of France is Paris."
+                    model_used: "llama3.2"
+                    execution_time_ms: 1234.56
+                    metadata:
+                      total_duration: 1500000000
+                      eval_count: 15
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Ollama service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+        - name: verbose
+          in: query
+          description: Enable verbose logging
+          required: false
+          schema:
+            type: boolean
+            default: false
+
+  /models:
+    get:
+      summary: List available models
+      description: Get a list of all available Ollama models
+      tags:
+        - Models
+      responses:
+        '200':
+          description: List of available models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsListResponse'
+              examples:
+                models_list:
+                  summary: Available models
+                  value:
+                    success: true
+                    models:
+                      - name: "llama3.2:latest"
+                        size: "2.0GB"
+                        modified_at: "2024-01-15T10:30:00Z"
+                        digest: "sha256:abc123..."
+                      - name: "mistral:latest"
+                        size: "4.1GB"
+                        modified_at: "2024-01-10T14:20:00Z"
+                        digest: "sha256:def456..."
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Ollama service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+        - name: verbose
+          in: query
+          description: Enable verbose logging
+          required: false
+          schema:
+            type: boolean
+            default: false
+
+  /health:
+    get:
+      summary: Health check
+      description: Comprehensive health check for Ollama service and available models
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ollama_server_running:
+                    type: boolean
+                    description: Whether Ollama server is running
+                  models_available:
+                    type: integer
+                    description: Number of available models
+                  available_models:
+                    type: array
+                    items:
+                      type: string
+                    description: List of available model names
+                  recommended_models:
+                    type: array
+                    items:
+                      type: string
+                    description: Recommended models to install if none available
+                  timestamp:
+                    type: number
+                    description: Health check timestamp
+              examples:
+                healthy:
+                  summary: Healthy status
+                  value:
+                    ollama_server_running: true
+                    models_available: 2
+                    available_models: ["llama3.2:latest", "mistral:latest"]
+                    recommended_models: []
+                    timestamp: 1640995200.123
+                unhealthy:
+                  summary: Unhealthy status
+                  value:
+                    ollama_server_running: false
+                    models_available: 0
+                    recommended_models: ["llama3.2", "llama3.2:1b", "llama3.1:8b", "mistral", "codellama"]
+                    timestamp: 1640995200.123
+        '500':
+          description: Health check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+        - name: verbose
+          in: query
+          description: Enable verbose logging
+          required: false
+          schema:
+            type: boolean
+            default: false
+
+  /leash-daily-calendar-fill:
+    post:
+      summary: Generate pet care calendar suggestions
+      description: |
+        Generate intelligent calendar suggestions for pet care activities based on current calendar,
+        pet details, and owner preferences. Uses a custom system prompt to create realistic and
+        practical suggestions that fit the owner's lifestyle and pet needs.
+      tags:
+        - Calendar AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarFillRequest'
+            examples:
+              single_dog:
+                summary: Single dog with basic schedule
+                value:
+                  current_calendar:
+                    - date: "2024-01-15"
+                      event_start_time_utc: "2024-01-15T09:00:00Z"
+                      event_end_time_utc: "2024-01-15T17:00:00Z"
+                      event_title: "Work"
+                      event_description: "Office work day"
+                  pet_details:
+                    - name: "Buddy"
+                      age: "3 years"
+                      breed: "Golden Retriever"
+                      weight: "65 lbs"
+                      walk_time_per_day: "60 minutes"
+                      activity_level: "high"
+                      special_needs: ""
+                      current_medications: []
+                  owner_details:
+                    owner_name: "John"
+                    yard_access: true
+                    preferred_walk_times: ["morning", "evening"]
+                    work_schedule: "9 AM - 5 PM weekdays"
+                    availability_notes: "Free weekends"
+                    preferred_activity_duration: "45 minutes"
+                  target_date: "2024-01-15"
+                  model: "llama3.2"
+                  temperature: 0.7
+      responses:
+        '200':
+          description: Calendar suggestions generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarFillResponse'
+              examples:
+                success_response:
+                  summary: Successful calendar suggestions
+                  value:
+                    success: true
+                    suggestions:
+                      - date: "2024-01-15"
+                        event_start_time_utc: "2024-01-15T07:00:00Z"
+                        event_end_time_utc: "2024-01-15T07:30:00Z"
+                        event_title: "Morning Walk - Buddy"
+                        event_description: "High-energy morning walk for Buddy. Take advantage of yard space for initial play before neighborhood walk."
+                        priority: "high"
+                        activity_type: "walk"
+                        pet_names: ["Buddy"]
+                      - date: "2024-01-15"
+                        event_start_time_utc: "2024-01-15T18:30:00Z"
+                        event_end_time_utc: "2024-01-15T19:15:00Z"
+                        event_title: "Evening Walk & Training - Buddy"
+                        event_description: "Extended evening walk with basic training exercises. Focus on recall and leash manners."
+                        priority: "high"
+                        activity_type: "walk"
+                        pet_names: ["Buddy"]
+                    execution_time_ms: 2456.78
+                    model_used: "llama3.2"
+                    metadata:
+                      total_suggestions_generated: 5
+                      valid_suggestions: 5
+        '422':
+          description: Validation error - missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Ollama service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+        - name: verbose
+          in: query
+          description: Enable verbose logging
+          required: false
+          schema:
+            type: boolean
+            default: false
+
+  /test-connection:
+    get:
+      summary: Test connection
+      description: Simple endpoint to test server connectivity
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Connection successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+      parameters:
+        - name: verbose
+          in: query
+          description: Enable verbose logging
+          required: false
+          schema:
+            type: boolean
+            default: false
+
+components:
+  schemas:
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: The text query to send to the model
+          minLength: 1
+          example: "What is the capital of France?"
+        model:
+          type: string
+          description: The Ollama model to use for inference
+          default: "llama3.2"
+          example: "llama3.2"
+        temperature:
+          type: number
+          description: Temperature for response generation
+          minimum: 0.0
+          maximum: 2.0
+          default: 0.7
+          example: 0.7
+        max_tokens:
+          type: integer
+          description: Maximum number of tokens to generate
+          minimum: 1
+          default: 1000
+          example: 1000
+        system_prompt:
+          type: string
+          description: Optional system prompt to set context
+          nullable: true
+          example: "You are a helpful assistant."
+
+    QueryResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the query was successful
+          example: true
+        response:
+          type: string
+          description: The generated text response from the model
+          nullable: true
+          example: "The capital of France is Paris."
+        model_used:
+          type: string
+          description: The model that was used for inference
+          nullable: true
+          example: "llama3.2"
+        execution_time_ms:
+          type: number
+          description: Time taken to generate response in milliseconds
+          nullable: true
+          example: 1234.56
+        error:
+          type: string
+          description: Error message if the query failed
+          nullable: true
+          example: "Model not found"
+        metadata:
+          type: object
+          description: Additional metadata about the response
+          nullable: true
+          additionalProperties: true
+          example:
+            total_duration: 1500000000
+            eval_count: 15
+
+    ModelInfo:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Model name
+          example: "llama3.2:latest"
+        size:
+          type: string
+          description: Model size
+          nullable: true
+          example: "2.0GB"
+        modified_at:
+          type: string
+          description: Last modified date
+          nullable: true
+          example: "2024-01-15T10:30:00Z"
+        digest:
+          type: string
+          description: Model digest/hash
+          nullable: true
+          example: "sha256:abc123..."
+
+    ModelsListResponse:
+      type: object
+      required:
+        - success
+        - models
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+          example: true
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+          description: List of available models
+        error:
+          type: string
+          description: Error message if the request failed
+          nullable: true
+          example: "Failed to connect to Ollama"
+
+    CalendarEvent:
+      type: object
+      required:
+        - date
+        - event_start_time_utc
+        - event_end_time_utc
+        - event_title
+      properties:
+        date:
+          type: string
+          format: date
+          description: Event date in YYYY-MM-DD format
+          example: "2024-01-15"
+        event_start_time_utc:
+          type: string
+          format: date-time
+          description: Event start time in UTC ISO format
+          example: "2024-01-15T09:00:00Z"
+        event_end_time_utc:
+          type: string
+          format: date-time
+          description: Event end time in UTC ISO format
+          example: "2024-01-15T17:00:00Z"
+        event_title:
+          type: string
+          description: Event title
+          example: "Work"
+        event_description:
+          type: string
+          description: Event description
+          example: "Office work day"
+
+    PetDetails:
+      type: object
+      required:
+        - name
+        - age
+        - breed
+        - weight
+        - walk_time_per_day
+      properties:
+        name:
+          type: string
+          description: Pet name
+          example: "Buddy"
+        age:
+          type: string
+          description: Pet age
+          example: "3 years"
+        breed:
+          type: string
+          description: Pet breed
+          example: "Golden Retriever"
+        weight:
+          type: string
+          description: Pet weight
+          example: "65 lbs"
+        walk_time_per_day:
+          type: string
+          description: Required walk time per day
+          example: "60 minutes"
+        current_medications:
+          type: array
+          items:
+            type: object
+          description: Current medications
+          example: []
+        special_needs:
+          type: string
+          description: Any special needs or health considerations
+          example: ""
+        activity_level:
+          type: string
+          enum: ["low", "moderate", "high"]
+          description: Pet's activity level
+          example: "moderate"
+
+    OwnerDetails:
+      type: object
+      required:
+        - owner_name
+      properties:
+        owner_name:
+          type: string
+          description: Owner's name
+          example: "John"
+        yard_access:
+          type: boolean
+          description: Whether owner has yard access
+          example: true
+        preferred_walk_times:
+          type: array
+          items:
+            type: string
+          description: Preferred times for walks
+          example: ["morning", "evening"]
+        work_schedule:
+          type: string
+          description: Owner's work schedule
+          example: "9 AM - 5 PM weekdays"
+        availability_notes:
+          type: string
+          description: Notes about availability
+          example: "Free weekends"
+        preferred_activity_duration:
+          type: string
+          description: Preferred activity duration
+          example: "30-60 minutes"
+
+    CalendarFillRequest:
+      type: object
+      required:
+        - current_calendar
+        - pet_details
+        - owner_details
+      properties:
+        current_calendar:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarEvent'
+          description: Current calendar events
+        pet_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/PetDetails'
+          description: List of pets and their details
+        owner_details:
+          $ref: '#/components/schemas/OwnerDetails'
+        target_date:
+          type: string
+          format: date
+          description: Target date for suggestions (YYYY-MM-DD)
+          nullable: true
+          example: "2024-01-15"
+        model:
+          type: string
+          description: LLM model to use
+          default: "llama3.2"
+          example: "llama3.2"
+        temperature:
+          type: number
+          description: Temperature for generation
+          default: 0.7
+          example: 0.7
+
+    CalendarSuggestion:
+      type: object
+      required:
+        - date
+        - event_start_time_utc
+        - event_end_time_utc
+        - event_title
+        - event_description
+      properties:
+        date:
+          type: string
+          format: date
+          description: Suggested event date in YYYY-MM-DD format
+          example: "2024-01-15"
+        event_start_time_utc:
+          type: string
+          format: date-time
+          description: Suggested start time in UTC ISO format
+          example: "2024-01-15T07:00:00Z"
+        event_end_time_utc:
+          type: string
+          format: date-time
+          description: Suggested end time in UTC ISO format
+          example: "2024-01-15T07:30:00Z"
+        event_title:
+          type: string
+          description: Suggested event title
+          example: "Morning Walk - Buddy"
+        event_description:
+          type: string
+          description: Detailed description of the suggested activity
+          example: "High-energy morning walk for Buddy"
+        priority:
+          type: string
+          enum: ["low", "medium", "high"]
+          description: Priority level
+          example: "high"
+        activity_type:
+          type: string
+          enum: ["walk", "feeding", "medication", "play", "grooming", "training", "general"]
+          description: Type of activity
+          example: "walk"
+        pet_names:
+          type: array
+          items:
+            type: string
+          description: Names of pets this activity is for
+          example: ["Buddy"]
+
+    CalendarFillResponse:
+      type: object
+      required:
+        - success
+        - suggestions
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+          example: true
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarSuggestion'
+          description: Generated calendar suggestions
+        execution_time_ms:
+          type: number
+          description: Time taken to generate suggestions
+          nullable: true
+          example: 2456.78
+        model_used:
+          type: string
+          description: Model used for generation
+          nullable: true
+          example: "llama3.2"
+        error:
+          type: string
+          description: Error message if the request failed
+          nullable: true
+          example: null
+        metadata:
+          type: object
+          description: Additional metadata
+          nullable: true
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Ollama service is not running"
+
+tags:
+  - name: LLM Query
+    description: Operations for querying LLM models
+  - name: Models
+    description: Operations for managing and listing models
+  - name: Calendar AI
+    description: AI-powered calendar generation for pet care
+  - name: Health
+    description: Health check and status operations 

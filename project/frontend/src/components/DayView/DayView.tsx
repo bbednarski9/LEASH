@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ArrowLeft, Plus, RefreshCw, Info, X } from 'lucide-react';
-import type { CalendarEvent } from '../../services/api';
+import type { CalendarEvent, CalendarSuggestion, User, Pet } from '../../services/api';
 import { apiService } from '../../services/api';
+import CalendarSuggestionsModal from './CalendarSuggestionsModal';
 
 // Google Calendar color mapping based on colorId
 const GOOGLE_CALENDAR_COLORS: { [key: string]: { background: string; foreground: string; border: string } } = {
@@ -37,6 +38,10 @@ const DayView: React.FC<DayViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [hourHeight, setHourHeight] = useState(80);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
+  const [suggestions, setSuggestions] = useState<CalendarSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [profiles, setProfiles] = useState<{ user: User; pets: Pet[] } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Generate hours array (24 hours)
@@ -50,6 +55,9 @@ const DayView: React.FC<DayViewProps> = ({
       // Fall back to loading events if not provided
       loadDayEvents();
     }
+    
+    // Load profiles for agent server
+    loadProfiles();
     
     // Scroll to 8 AM on mount after hour height is set
     setTimeout(() => {
@@ -93,6 +101,15 @@ const DayView: React.FC<DayViewProps> = ({
       setEvents([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfiles = async () => {
+    try {
+      const profileData = await apiService.loadProfilesFromFiles();
+      setProfiles(profileData);
+    } catch (error) {
+      console.error('Error loading profiles:', error);
     }
   };
 
@@ -210,9 +227,113 @@ const DayView: React.FC<DayViewProps> = ({
   console.log('Hour height:', hourHeight);
   console.log('Selected date:', selectedDate);
 
-  const handleUpdateCalendar = async () => {
-    // Placeholder for future AI calendar update functionality
-    alert('Calendar update feature will be implemented when agent_server is completed.');
+  const handleScheduleDogCare = async () => {
+    if (!profiles) {
+      alert('Profile data not loaded. Please refresh the page.');
+      return;
+    }
+
+    setSuggestionsLoading(true);
+    setShowSuggestionsModal(true);
+    
+    try {
+      // Convert profiles and current events to agent server format
+      const targetDate = apiService.formatDateForAPI(selectedDate);
+      const agentRequest = apiService.convertToAgentFormat(
+        profiles.user,
+        profiles.pets,
+        events,
+        targetDate
+      );
+
+      console.log('Sending request to agent server:', agentRequest);
+
+      // Call agent server for suggestions
+      const response = await apiService.getCalendarSuggestions(agentRequest);
+      
+      if (response.success) {
+        setSuggestions(response.suggestions);
+        console.log('Received suggestions:', response.suggestions);
+      } else {
+        throw new Error(response.error || 'Failed to get suggestions');
+      }
+    } catch (error) {
+      console.error('Error getting calendar suggestions:', error);
+      // Show error message but keep modal open
+      setSuggestions([]);
+      alert('Failed to get calendar suggestions. Please make sure the agent server is running on port 5002.');
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const handleAcceptSuggestion = async (suggestion: CalendarSuggestion) => {
+    try {
+      // Convert suggestion to the email server's expected format
+      // Note: suggestion times are in local timezone, need to convert to UTC for Google Calendar
+      const startTimeString = suggestion.event_start_time_local || (suggestion as any).event_start_time_utc;
+      const endTimeString = suggestion.event_end_time_local || (suggestion as any).event_end_time_utc;
+      
+      if (!startTimeString || !endTimeString) {
+        console.error('Missing time fields when accepting suggestion:', suggestion);
+        return;
+      }
+      
+      // Handle case where LLM returns just time portion instead of full datetime
+      const createFullDateTime = (timeStr: string, date: string) => {
+        if (timeStr.includes('T')) {
+          return timeStr;
+        } else {
+          return `${date}T${timeStr}`;
+        }
+      };
+      
+      const fullStartTime = createFullDateTime(startTimeString, suggestion.date);
+      const fullEndTime = createFullDateTime(endTimeString, suggestion.date);
+      
+      const startTimeLocal = new Date(fullStartTime);
+      const endTimeLocal = new Date(fullEndTime);
+      
+      const eventRequest = {
+        events: [{
+          date: suggestion.date,
+          'event-start-time-UTC': startTimeLocal.toISOString(),
+          'event-end-time-UTC': endTimeLocal.toISOString(),
+          'event-title': suggestion.event_title,
+          'event-description': suggestion.event_description
+        }]
+      };
+
+      console.log('Creating calendar event:', eventRequest);
+
+      // Create the event via email server
+      await apiService.createCalendarEvents(eventRequest);
+      
+      // Remove the suggestion from the list
+      const suggestionTime = suggestion.event_start_time_local || (suggestion as any).event_start_time_utc;
+      setSuggestions(prev => prev.filter(s => {
+        const sTime = s.event_start_time_local || (s as any).event_start_time_utc;
+        return sTime !== suggestionTime || s.event_title !== suggestion.event_title;
+      }));
+      
+      // Refresh events to show the new one
+      await loadDayEvents();
+      
+      console.log('Successfully added event to calendar');
+    } catch (error) {
+      console.error('Error accepting suggestion:', error);
+      alert('Failed to add event to calendar. Please try again.');
+      throw error; // Re-throw to handle in modal
+    }
+  };
+
+  const handleRejectSuggestion = (suggestion: CalendarSuggestion) => {
+    // Simply remove from suggestions list
+    const suggestionTime = suggestion.event_start_time_local || (suggestion as any).event_start_time_utc;
+    setSuggestions(prev => prev.filter(s => {
+      const sTime = s.event_start_time_local || (s as any).event_start_time_utc;
+      return sTime !== suggestionTime || s.event_title !== suggestion.event_title;
+    }));
   };
 
   return (
@@ -389,22 +510,22 @@ const DayView: React.FC<DayViewProps> = ({
                       borderStyle: 'solid',
                     }}
                   >
-                    <div className="p-2 h-full flex flex-col">
+                    <div className="p-2 h-full flex flex-col overflow-y-auto">
                       <div 
-                        className="text-sm font-medium truncate"
+                        className="text-sm font-medium mb-1 flex-shrink-0"
                         style={{ color: eventColor.foreground }}
                       >
                         {event.title}
                       </div>
                       <div 
-                        className="text-xs opacity-90"
+                        className="text-xs opacity-90 mb-1 flex-shrink-0"
                         style={{ color: eventColor.foreground }}
                       >
                         {format(parseISO(event.start_time), 'h:mm a')} - {format(parseISO(event.end_time), 'h:mm a')}
                       </div>
-                      {event.description && event.position.height > 50 && (
+                      {event.description && (
                         <div 
-                          className="text-xs opacity-75 mt-1 truncate"
+                          className="text-xs opacity-75 flex-1 overflow-y-auto"
                           style={{ color: eventColor.foreground }}
                         >
                           {event.description}
@@ -419,16 +540,27 @@ const DayView: React.FC<DayViewProps> = ({
         </div>
       </div>
 
+      {/* Calendar Suggestions Modal */}
+      <CalendarSuggestionsModal
+        isOpen={showSuggestionsModal}
+        onClose={() => setShowSuggestionsModal(false)}
+        suggestions={suggestions}
+        onAccept={handleAcceptSuggestion}
+        onReject={handleRejectSuggestion}
+        loading={suggestionsLoading}
+      />
+
       {/* Fixed Bottom Button */}
       <div className="bg-white border-t shadow-lg p-4">
         <button
-          onClick={handleUpdateCalendar}
-          disabled={true} // Disabled for now as mentioned in requirements
-          className="w-full bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 cursor-not-allowed transition-colors"
+          onClick={handleScheduleDogCare}
+          disabled={suggestionsLoading || !profiles}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:cursor-not-allowed"
         >
           <Plus className="w-5 h-5" />
-          <span>Update Calendar with Pet Details</span>
-          <span className="text-xs opacity-75">(Coming Soon)</span>
+          <span>
+            {suggestionsLoading ? 'Generating Suggestions...' : 'Schedule Dog Care'}
+          </span>
         </button>
       </div>
     </div>
