@@ -14,7 +14,7 @@ This project integrates multiple services to provide AI-powered pet care calenda
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Profiles │    │ Google Calendar │    │  Ollama LLM     │
+│      Profiles   │    │ Google Calendar │    │  Ollama LLM     │
 │   (Static JSON) │    │      API        │    │  (Local Host)   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
