@@ -233,8 +233,5 @@ This project is for the Microsoft Senior Applied Scientist application demonstra
 
 ## 💡 Next Steps
 
-- [ ] Enhanced profile management UI
-- [ ] Multi-day scheduling optimization
 - [ ] Calendar template system
-- [ ] Mobile-responsive design
-- [ ] Notification system for upcoming activities 
+- [ ] Accident prediction network ;)
