@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  email-server:
+    build: .
+    container_name: email-server
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:5000/auth/callback}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5000}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/test-connection')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      # Mount source code for development (remove in production)
+      - .:/app
+    # Uncomment for production deployment
+    # volumes:
+    #   - ./app:/app/app:ro 

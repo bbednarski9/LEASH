@@ -1,0 +1,57 @@
+{
+
+  "pets": [
+    {
+      "id": "luna_001",
+      "name": "Luna",
+      "age": "4 years",
+      "breed": "Border Collie",
+      "weight": "45 lbs",
+      "gender": "female",
+      "color": "black and white",
+      "walk-time-per-day": "90 minutes",
+      "energy-level": "high",
+      "training-level": "advanced",
+      "current_medications": [
+        {
+          "name": "Heartgard Plus",
+          "start_date": "2025-01-01",
+          "end_date": "2025-12-31",
+          "count-per-day": 1,
+          "mg-per-serving": 68,
+          "give-with-food": false,
+          "notes": "Monthly heartworm prevention"
+        }
+      ],
+      "dietary-restrictions": [],
+      "favorite-activities": ["agility training", "frisbee", "hiking"],
+      "behavioral-notes": "Highly intelligent, needs mental stimulation, responds well to positive reinforcement"
+    },
+    {
+      "id": "gus_002",
+      "name": "Gus",
+      "age": "6 years",
+      "breed": "Golden Retriever",
+      "weight": "70 lbs",
+      "gender": "male",
+      "color": "golden",
+      "walk-time-per-day": "60 minutes",
+      "energy-level": "medium",
+      "training-level": "intermediate",
+      "current_medications": [
+        {
+          "name": "Carprofen",
+          "start_date": "2025-03-01",
+          "end_date": "2025-06-01",
+          "count-per-day": 2,
+          "mg-per-serving": 50,
+          "give-with-food": true,
+          "notes": "For joint pain, give with breakfast and dinner"
+        }
+      ],
+      "dietary-restrictions": ["no chicken"],
+      "favorite-activities": ["fetch", "swimming", "belly rubs"],
+      "behavioral-notes": "Very friendly, loves people and other dogs, can be excitable when meeting new friends"
+    }
+  ]
+} 

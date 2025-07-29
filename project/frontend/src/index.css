@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* Custom scrollbar for better mobile experience */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth scrolling for all elements */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Ensure full height on mobile devices */
+html, body, #root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Mobile viewport height fix */
+@supports (-webkit-touch-callout: none) {
+  html, body, #root {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for interactive elements */
+button, .transition-colors {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Loading animation improvements */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Custom utilities for mobile-first design */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Better button tap targets for mobile */
+.btn-mobile {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Calendar specific styles */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  min-height: 60px;
+}
+
+@media (max-width: 640px) {
+  .calendar-day {
+    min-height: 50px;
+  }
+}
+
+/* Day view styles */
+.time-grid {
+  background-image: linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+  background-size: 100% 80px;
+}
+
+/* Profile panel responsive styles */
+.profile-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .profile-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Custom animation for page transitions */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
