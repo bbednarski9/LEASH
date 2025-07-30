@@ -1,5 +1,3 @@
-# MSFT Senior Applied Scientist - Pet Care Calendar Project
-
 This project integrates multiple services to provide AI-powered pet care calendar suggestions using local LLM models.
 
 ## 🏗️ Architecture Overview
