@@ -2,6 +2,7 @@
 
 An open-source solution for Google Calendar integration of your pet care routines and preferences.
 
+Click the thumbnail below to watch LEASH in action...
 [![Watch the demo video](refs/thumbnail.png)](https://www.youtube.com/watch?v=qAUUVLszYt4)
 
 This project integrates multiple services to provide AI-powered pet care calendar suggestions using local LLM models.
